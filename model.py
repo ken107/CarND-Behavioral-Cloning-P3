@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from sklearn.utils import shuffle
 from keras.models import Model
-from keras.layers import Input, Lambda, Flatten, Dense, Cropping2D, Convolution2D, MaxPooling2D
+from keras.layers import Input, Lambda, Flatten, Dense, Cropping2D, Convolution2D, MaxPooling2D, Activation
 from keras import backend as K
 
 
@@ -17,7 +17,6 @@ def samples_get(path):
             if line[0] != 'center':
                 samples.append({
                     "path": path + "IMG/" + re.split(r"[\\/]", line[0])[-1],
-                    "speed": float(line[6]),
                     "steer": float(line[3])
                 })
     return samples
@@ -28,12 +27,11 @@ def batch_gen(samples, batch_size):
         samples = shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
-            batch_x1, batch_x2, batch_y = [], [], []
+            batch_x, batch_y = [], []
             for batch_sample in batch_samples:
-                batch_x1.append(cv2.imread(batch_sample["path"]))
-                batch_x2.append(batch_sample["speed"])
+                batch_x.append(cv2.imread(batch_sample["path"]))
                 batch_y.append(batch_sample["steer"])
-            yield [np.array(batch_x1), np.array(batch_x2)], np.array(batch_y)
+            yield np.array(batch_x), np.array(batch_y)
 
 
 ### model
@@ -41,25 +39,28 @@ def Resize(img, size, method):
     return K.tf.image.resize_images(img, size, method)
 
 def Normalize(img):
-    return img / 255.0
+    return img / 127.5 - 1
 
 def Concatenate(values):
     return K.tf.concat(1, values)
 
 def model_create():
     image_input = Input(shape=(160,320,3))
-    speed_input = Input(shape=(1,))
     x = image_input
     #x = Cropping2D(cropping=((70,10), (0,0)))(x)
     x = Lambda(function=Resize, arguments={"size": (32,32), "method": K.tf.image.ResizeMethod.AREA})(x)
     x = Lambda(function=Normalize)(x)
+    x = Convolution2D(32, 5, 5)(x)
+    x = Activation("relu")(x)
+    x = MaxPooling2D((2,2))(x)
+    x = Convolution2D(64, 5, 5)(x)
+    x = Activation("relu")(x)
+    x = MaxPooling2D((2,2))(x)
     x = Flatten()(x)
-    x = Lambda(function=Concatenate)([x, speed_input])
-    x = Dense(200, activation="relu")(x)
-    x = Dense(120, activation="relu")(x)
-    x = Dense(84, activation="relu")(x)
+    x = Dense(120)(x)
+    x = Activation("relu")(x)
     x = Dense(1)(x)
-    return Model([image_input, speed_input], x)
+    return Model(image_input, x)
 
 
 ### training
