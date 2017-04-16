@@ -24,7 +24,6 @@ def batch_gen(samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
             batch_x, batch_y = [], []
             for batch_sample in batch_samples:
-                batch_x.append(cv2.imread(batch_sample["path"], 0)[..., None])
+                batch_x.append(cv2.imread(batch_sample["path"]))
                 batch_y.append(batch_sample["steer"])
             yield np.array(batch_x), np.array(batch_y)
-

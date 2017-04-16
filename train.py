@@ -18,7 +18,7 @@ valid_gen = batch_gen(valid_samples, FLAGS.batch_size)
 
 model = model_create()
 model.summary()
-model.compile(optimizer="adam", loss="mse", metrics=['accuracy'])
+model.compile(optimizer="adam", loss="mse")
 model.fit_generator(
     train_gen,
     samples_per_epoch=len(train_samples),
@@ -28,4 +28,3 @@ model.fit_generator(
 
 model.save("model.h5")
 print("Model saved")
-
