@@ -24,6 +24,7 @@ def model_create(from_model=None):
     x = Convolution2D(48, 5, 5, activation="relu", subsample=(2,2))(x)
     x = Convolution2D(64, 3, 3, activation="relu")(x)
     x = Convolution2D(64, 3, 3, activation="relu")(x)
+    x = Dropout(.5)(x)
     x = Flatten()(x)
     x = Dense(100, activation="relu")(x)
     x = Dense(50, activation="relu")(x)

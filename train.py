@@ -2,7 +2,7 @@ from keras import backend as K
 from model import *
 from data import *
 
-K.tf.app.flags.DEFINE_integer('epochs', 1, 'Number of epochs to train')
+K.tf.app.flags.DEFINE_integer('epochs', 2, 'Number of epochs to train')
 K.tf.app.flags.DEFINE_integer('batch_size', 32, 'Training batch size')
 K.tf.app.flags.DEFINE_string('training', 'data/training/', 'Path containing training CSV & images')
 K.tf.app.flags.DEFINE_string('validation', 'data/validation/', 'Path containing validation CSV & images')
