@@ -45,7 +45,7 @@ class SimplePIController:
 
 controller = SimplePIController(0.1, 0.002)
 ## Track 1 can do 25 mph, Track 2 can only do max 13 mph
-set_speed = 13
+set_speed = 20
 controller.set_desired(set_speed)
 
 
