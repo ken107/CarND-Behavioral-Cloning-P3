@@ -4,7 +4,10 @@ import cv2
 import numpy as np
 from sklearn.utils import shuffle
 
+correction_factor = .1
+
 def sample_add(samples, path, steer):
+    # add two samples for each image: normal & flipped
     samples.append({"path": path, "steer": steer, "flip": False})
     samples.append({"path": path, "steer": steer, "flip": True})
 
@@ -15,15 +18,18 @@ def samples_get(path):
         for line in lines:
             if line[0] != 'center':
                 steer = float(line[3])
+                # add samples for center, left, and right images
+                # the correction_factor is a percentage of the steer angle rather than a constant amount
                 sample_add(samples, path + "IMG/" + re.split(r"[\\/]", line[0])[-1], steer)
-                sample_add(samples, path + "IMG/" + re.split(r"[\\/]", line[1])[-1], steer+.1*abs(steer))
-                sample_add(samples, path + "IMG/" + re.split(r"[\\/]", line[2])[-1], steer-.1*abs(steer))
+                sample_add(samples, path + "IMG/" + re.split(r"[\\/]", line[1])[-1], steer+correction_factor*abs(steer))
+                sample_add(samples, path + "IMG/" + re.split(r"[\\/]", line[2])[-1], steer-correction_factor*abs(steer))
     return samples
 
-def batch_gen(samples, batch_size):
+def batch_gen(samples, batch_size, bl_shuffle=True):
     num_samples = len(samples)
     while 1:
-        samples = shuffle(samples)
+        if bl_shuffle:
+            samples = shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
             batch_x, batch_y = [], []

@@ -1,12 +1,8 @@
-#**Behavioral Cloning** 
+# **Behavioral Cloning Project**
 
-##Writeup Template
-
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+## Writeup
 
 ---
-
-**Behavioral Cloning Project**
 
 The goals / steps of this project are the following:
 * Use the simulator to collect data of good driving behavior
@@ -18,112 +14,121 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
+[image1]: ./examples/augment.PNG "Augmented samples"
+[image2]: ./examples/hidden_1.PNG "Conv 1 Output"
+[image3]: ./examples/hidden_2.PNG "Conv 2 Output"
+[image4]: ./examples/model_summary.PNG "Model Architecture"
+[image5]: ./examples/training_result.PNG "Training Result"
 
 ## Rubric Points
-###Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
+
+Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
 
 ---
-###Files Submitted & Code Quality
+### Files Submitted & Code Quality
 
-####1. Submission includes all required files and can be used to run the simulator in autonomous mode
+#### 1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
 My project includes the following files:
-* model.py containing the script to create and train the model
-* drive.py for driving the car in autonomous mode
-* model.h5 containing a trained convolution neural network 
-* writeup_report.md or writeup_report.pdf summarizing the results
+* _train.py_ is the main training script
+* _data.py_ containing scripts to load data and create generators
+* _model.py_ containing the script to create the model
+* _visualize.py_ containing script to view/debug hidden layer outputs
+* _drive.py_ for driving the car in autonomous mode (only modified speed setting)
+* _model.h5_ containing a trained convolution neural network
+* _video.mp4_ showing autonomous driving on both track 1 and 2
+* _writeup_report.md_ summarizing the results (this file)
 
-####2. Submission includes functional code
-Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing 
+#### 2. Submission includes functional code
+Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing
 ```sh
 python drive.py model.h5
 ```
 
-####3. Submission code is usable and readable
+My model can drive track 1 safely at 25 mph.  It can drive track 2 safely at 13 mph.  Please modify _drive.py_ correspondingly before testing.
 
-The model.py file contains the code for training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works.
+#### 3. Submission code is usable and readable
 
-###Model Architecture and Training Strategy
+The _train.py_ file contains the code for training and saving the convolution neural network. It imports _data.py_ and _model.py_ for managing data and creating the model. The code in these 3 files are fairly straightforward and requires few comments.
 
-####1. An appropriate model architecture has been employed
+---
+### Model Architecture and Training Strategy
 
-My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24) 
+#### 1. An appropriate model architecture has been employed
 
-The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18). 
+After much experimentation (see explanation in next section), I choose to use the NVIDIA architecture.
 
-####2. Attempts to reduce overfitting in the model
+#### 2. Attempts to reduce overfitting in the model
 
-The model contains dropout layers in order to reduce overfitting (model.py lines 21). 
+The model contains Dropout layers in order to reduce overfitting (_model.py_ line 35).
 
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
+Also, by training on both tracks and augmenting the dataset by flipping & using left/right images, there are sufficiently large number of samples to minimize overfitting (_data.py_ line 23).
 
-####3. Model parameter tuning
+#### 3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
+The model used an Adam optimizer, so the learning rate was not tuned manually (_train.py_ line 20).  I use a batch_size of 32, dropout rate of .5.
 
-####4. Appropriate training data
+#### 4. Appropriate training data
 
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ... 
+For track 1, I use the provided sample training data.  For track 2, I drove total 8 laps, forward & backward, to generate training data.
 
-For details about how I created the training data, see the next section. 
+To augment the data, I use the images from the left and right cameras with a correction factor of 10%.  In other words, if the steering angle is `a` then the left-corrected steering angle is `a+.1*abs(a)` and the right-corrected steering angle is `a-.1*abs(a)` (_data.py_ line 24).  In addition, I flip every image horizontally and add it to the training set.
 
-###Model Architecture and Training Strategy
+For details about how I created the training data, see the next section.
 
-####1. Solution Design Approach
+---
+### Model Architecture and Training Strategy
 
-The overall strategy for deriving a model architecture was to ...
+#### 1. Solution Design Approach
 
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
+Initially I attempted to experiment with various architectures, starting with LeNet and then adding/removing layers, tweaking parameters.  I was able get the car to drive most of track 1 using an architecture similar to LeNet.  But I could not, in any concrete way, incrementally improve the architecture.
 
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
+For example, I would tweak a parameter and rerun the training, but the loss would be mostly the same.  I would add an additional FC layer with activation, but I couldn't tell the car is driving any better.  I did try to visualize the feature maps of the first few Conv layers, but did not glean meaningful indicators as to how to improve the architecture.
 
-To combat the overfitting, I modified the model so that ...
+*Feature map of 1st Convolution layer*
+![output of 1st Conv layer][image2]
 
-Then I ... 
+*Feature map of 2nd Convolution layer (same image)*
+![output of 2nd Conv layer][image3]
 
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
+In some cases, however, I did discover what _not_ to do, such as using `tanh` for a Conv layer.
 
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
+Nonetheless I had general ideas about the purpose of the various layers.  The convolution layers are intended to extract features in the image, specifically the lane lines, and allow the following DNN to make decision based on those features.  Activation is an important part of convolution layers.  It's not clear to me how to pick kernel size, but I follow the commonly-used 3 or 5.  Using larger kernel sizes seemed to have a negative impact on the result.
 
-####2. Final Model Architecture
+It was also difficult to decide how many fully-connected layers to use.  I know I needed at least two to create a deep NN, with activation for nonlinearity.  But how many layers, or how many neurons per layer, was unclear.
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
+#### 2. Final Model Architecture
 
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
+In the end, I decided to just implement NVIDIA's architecture (_model.py_ line 22).  The NVIDIA paper doesn't mention what activation they use, so I chose "relu".  I added a Cropping layer to remove scenery, and a Lambda layer that resizes and normalizes the image.  Here is the model's summary:
 
-![alt text][image1]
+![model architecture][image4]
 
-####3. Creation of the Training Set & Training Process
+#### 3. Creation of the Training Set & Training Process
 
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
+I notice that the provided sample training data for track 1 was quite extensive, over 20 laps forward and backwards, so I decided to use it without recording my own.  I found that the data was more than sufficient.  To augment the dataset, I use the left and right camera images, and also flip every image horizontally, resulting in 6 times increase in the number of samples (around 48,000).
 
-![alt text][image2]
+![augmented samples][image1]
+*center/left/right image and their flipped versions*
 
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
+With the right setting of the correction factor, I found a sweet spot and the car can drive track 1 smoothly and expertly at 30mph, possibly even faster.  However, after adding training data for track 2, it no longer drives smoothly on track 1, and could only do max 25 mph.
 
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
+Track 2 is difficult to drive manually, even with a calibrated joystick.  I drove total 8 laps forward and backward.  It was hard to keep to the center, the whole drive was recovery driving.  The number of track 2 samples after augmentation is about 60,000.  After training, the model can drive track 2 safely at 13 mph.
 
-Then I repeated this process on track two in order to get more data points.
+For validation, instead of splitting the training data, I did some manual driving on both track 1 and 2 and use that as validation data.
 
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
+**Preprocessing**
 
-![alt text][image6]
-![alt text][image7]
+First, a Keras Cropping2D layer clips the top 60 and bottom 20 pixels, removing scenery and hood (_model.py_ line 25).  Removing scenery helps the network focus on the road only.  Removing the hood is necessary since the hood looks different in the left and right images and we don't want the network to train on that.
 
-Etc ....
+Secondly, a Lambda layer (_model.py_ line 26) resizes the image to 66x200 (the input resolution of the NVIDIA architecture), and then normalizes the pixel values to (-1, 1).
 
-After the collection process, I had X number of data points. I then preprocessed this data by ...
+**Training results**
 
+![training results][image5]
 
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
+The training loss is slightly larger than the validation loss, indicating slight underfitting but no overfitting.  I used 3 epochs, additional epochs did not seem to improve result.  I used the Adam optimizer, so the learning rate was not tuned manually.
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+## Conclusion
+Even though I did not use my own architecture, I experimented quite a bit with various configurations, and have gained better understanding of the different types of layers and their purposes.  Most importantly I learned how to get my hands dirty with Keras, surf its and TensorFlow's documentation, examine outputs of intermediate layers to gauge how well the network is learning, and appreciate the importance of having lots of data, and how to achieve that through simple augmentation.
+
+In the end, it still surprises me how simply by watching me drive, this network of numbers learned to do the same, perhaps even better.  As one SDC student said, it's like "black magic".
